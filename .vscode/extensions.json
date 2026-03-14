@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    // Vue 官方扩展（必须）
+    "Vue.volar",
+    "Vue.vscode-typescript-vue-plugin",
+    // 代码格式化
+    "esbenp.prettier-vscode",
+    // ESLint
+    "dbaeumer.vscode-eslint",
+    // Git 工具
+    "eamodio.gitlens",
+    // 其他实用工具
+    "usernamehw.errorlens",
+    "christian-kohler.path-intellisense",
+    "formulahendry.auto-rename-tag",
+    "bradlc.vscode-tailwindcss"
+  ],
+  "unwantedRecommendations": [
+    // Vetur 与 Volar 冲突，必须禁用
+    "octref.vetur"
+  ]
+}

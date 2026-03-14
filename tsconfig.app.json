@@ -1,0 +1,34 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "include": [
+    "env.d.ts",
+    "src/**/*",
+    "src/**/*.vue",
+    "src/**/*.d.ts",
+    "src/auto-imports.d.ts",
+    "src/components.d.ts"
+  ],
+  "exclude": ["src/**/__tests__/*"],
+  "compilerOptions": {
+    // composite 需要这些配置（用于项目引用）
+    "composite": true,
+
+    // 禁用输出，因为 Vite 会处理编译
+    "noEmit": true,
+
+    // 路径别名
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    // 更严格的类型检查
+    "noUncheckedIndexedAccess": true,
+
+    // 确保类型声明文件被包含
+    "skipLibCheck": true,
+
+    // `vue-tsc --build` 产生 .tsbuildinfo 文件用于增量类型检查
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo"
+  }
+}
