@@ -22,7 +22,8 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
-      vueDevTools(),
+      // Vue DevTools 仅在开发环境启用，生产构建时自动禁用（插件内部会自动检测）
+      ...(mode === 'development' ? [vueDevTools()] : []),
 
       // 自动导入 API
       AutoImport({
