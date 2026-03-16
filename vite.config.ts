@@ -104,11 +104,28 @@ export default defineConfig(({ mode }) => {
           // 手动分包
           manualChunks: (id) => {
             // Vue 核心库
-            if (id.includes("node_modules/vue") || id.includes("node_modules/vue-router") || id.includes("node_modules/pinia")) {
+            if (
+              id.includes("node_modules/vue") ||
+              id.includes("node_modules/vue-router") ||
+              id.includes("node_modules/pinia")
+            ) {
               return "vendor-vue";
             }
-            // Element Plus 全家桶
-            if (id.includes("node_modules/element-plus") || id.includes("node_modules/@element-plus")) {
+            // Element Plus 拆分（避免循环依赖，只拆分样式和图标）
+            if (
+              id.includes("node_modules/element-plus") ||
+              id.includes("node_modules/@element-plus")
+            ) {
+              // Element Plus 样式文件单独拆分
+              if (id.includes("element-plus/theme-chalk") || id.includes(".css")) {
+                return "vendor-element-style";
+              }
+              // Element Plus 图标库单独拆分（图标库体积较大且独立）
+              if (id.includes("@element-plus/icons-vue") || id.includes("element-plus/icons")) {
+                return "vendor-element-icons";
+              }
+              // Element Plus 组件库保持在一个 chunk 中，避免循环依赖
+              // 虽然单个文件可能较大，但避免了组件间的循环依赖问题
               return "vendor-element";
             }
             // 工具库（仅包含已安装的包）
@@ -156,8 +173,8 @@ export default defineConfig(({ mode }) => {
         },
       },
 
-      // 分块大小警告阈值
-      chunkSizeWarningLimit: 800, // 改为 800KB
+      // 分块大小警告阈值（提高阈值，因为 Element Plus 本身较大，但已通过拆分优化）
+      chunkSizeWarningLimit: 1000, // 1MB，Element Plus 拆分后单个 chunk 应该小于此值
     },
   };
 });

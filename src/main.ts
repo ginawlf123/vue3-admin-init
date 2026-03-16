@@ -4,9 +4,10 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 
-// 使用了 unplugin-vue-components 插件，它会自动按需导入 Element Plus组件，查看文件vite.config.ts
-// 只需引入 Element Plus 样式
-import "element-plus/dist/index.css";
+// 使用了 unplugin-vue-components 插件，它会自动按需导入 Element Plus 组件和样式
+// 注意：不需要全量导入 CSS，插件会根据使用的组件自动按需导入样式
+// 如果遇到样式问题，可以取消下面的注释来全量导入（但会增加打包体积）
+// import "element-plus/dist/index.css";
 
 // 引入模板的全局的样式
 import "@/styles/index.scss";

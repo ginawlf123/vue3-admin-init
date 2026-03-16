@@ -10,6 +10,7 @@
 
 <script setup lang="ts">
 const text = ref<string>("");
+
 // ElMessage 也会自动导入
 const showMsg = () => {
   console.log(text.value);
