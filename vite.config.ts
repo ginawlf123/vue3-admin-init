@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       vue(),
       // Vue DevTools 仅在开发环境启用，生产构建时自动禁用（插件内部会自动检测）
-      ...(mode === 'development' ? [vueDevTools()] : []),
+      ...(mode === "development" ? [vueDevTools()] : []),
 
       // 自动导入 API
       AutoImport({
@@ -118,11 +118,17 @@ export default defineConfig(({ mode }) => {
               id.includes("node_modules/@element-plus")
             ) {
               // Element Plus 样式文件单独拆分
-              if (id.includes("element-plus/theme-chalk") || id.includes(".css")) {
+              if (
+                id.includes("element-plus/theme-chalk") ||
+                id.includes(".css")
+              ) {
                 return "vendor-element-style";
               }
               // Element Plus 图标库单独拆分（图标库体积较大且独立）
-              if (id.includes("@element-plus/icons-vue") || id.includes("element-plus/icons")) {
+              if (
+                id.includes("@element-plus/icons-vue") ||
+                id.includes("element-plus/icons")
+              ) {
                 return "vendor-element-icons";
               }
               // Element Plus 组件库保持在一个 chunk 中，避免循环依赖

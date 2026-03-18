@@ -21,8 +21,11 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
     "axios": "^1.13.6",
+    "crypto-js": "^4.2.0",
     "element-plus": "^2.13.5",
+    "nprogress": "^0.2.0",
     "pinia": "^3.0.4",
+    "pinia-plugin-persistedstate": "^4.7.1",
     "vue": "^3.5.29",
     "vue-router": "^5.0.3"
   },
@@ -30,7 +33,9 @@
     "@eslint/js": "^10.0.1",
     "@iconify-json/ep": "^1.2.4",
     "@tsconfig/node24": "^24.0.4",
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^24.11.0",
+    "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vue/tsconfig": "^0.8.1",
     "eslint": "^10.0.3",

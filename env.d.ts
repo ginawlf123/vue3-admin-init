@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_API_PROXY_PREFIX: string;
   readonly VITE_ENABLE_DEBUG: boolean;
   readonly VITE_ENABLE_MOCK: boolean;
+  readonly VITE_ENCRYPT_SECRET_KEY: string;
 }
 
 interface ImportMeta {

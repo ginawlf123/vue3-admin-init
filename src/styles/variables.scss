@@ -1,2 +1,26 @@
 /* 设置全局变量 */
-// 例：$primary-color: #42b883;
+
+// 亮色模式变量
+:root {
+  --bg-color: #f0f2f5;
+  --bg-color-secondary: #f0f2f5;
+  --text-color: #15171F;
+  --text-color-secondary: #666666;
+  --border-color: #e5e7eb;
+  --header-bg: #ffffff;
+  --aside-bg: #ffffff;
+  --main-bg: #ffffff;
+}
+
+// 暗色模式变量
+:root.dark {
+  --bg-color: #101014;
+  --bg-color-secondary: #141414;
+  --text-color: ##F5F6FF;
+  --text-color-secondary: #a0a0a0;
+  --border-color: #303030;
+  --header-bg: #18181c;
+  --aside-bg: #18181c;
+  --main-bg: #18181c;
+  /* 暗色模式下侧边栏 hover/滚动条需要反色：给 body/html 加 dark class 后由组件内 :global(.dark) 覆盖 */
+}

@@ -1,5 +1,7 @@
 import { createPinia } from "pinia";
 import { createApp } from "vue";
+// 导入持久化插件，用于将Pinia的状态持久化到本地存储（自动同步到 localStorage）
+import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 
 import App from "./App.vue";
 import router from "./router";
@@ -21,10 +23,19 @@ import SvgIcon from "@/components/SvgIcon.vue";
 // 封装自定义组件使用iconfont图标
 import Iconfont from "@/components/Iconfont.vue";
 
+// 权限守卫
+import { setupPermission } from "@/router/permission";
+
+// 主题管理
+import { useThemeStore } from "@/stores/theme";
+
 // 导入图标注册函数
 import { registerIcons } from "./plugins/icons";
 
 const app = createApp(App);
+const pinia = createPinia();
+// 注册持久化插件
+pinia.use(piniaPluginPersistedstate);
 
 // 注册全局组件
 app.component("SvgIcon", SvgIcon);
@@ -34,7 +45,14 @@ app.component("Iconfont", Iconfont);
 registerIcons(app);
 
 // 使用插件
-app.use(createPinia());
+app.use(pinia);
 app.use(router);
+
+// 初始化权限守卫（必须在 app.use(pinia) 之后）
+setupPermission(router);
+
+// 初始化主题（必须在 app.use(pinia) 之后）
+const themeStore = useThemeStore();
+themeStore.initTheme();
 
 app.mount("#app");

@@ -90,15 +90,17 @@ textarea {
   font-size: inherit;
 }
 
-button,
-html [type="button"],
-[type="reset"],
-[type="submit"] {
+// 只重置原生 HTML button，不影响 Element Plus 等组件库的按钮
+button:not([class*="el-"]):not([class*="el-button"]),
+html [type="button"]:not([class*="el-"]),
+[type="reset"]:not([class*="el-"]),
+[type="submit"]:not([class*="el-"]) {
   padding: 0;
   border: 0;
   color: inherit;
   background-color: transparent;
   -webkit-appearance: button;
+  appearance: button;
   cursor: pointer;
 }
 
@@ -108,7 +110,7 @@ input::-moz-focus-inner {
   padding: 0;
 }
 
-input {
+input:not([class*="el-"]) {
   padding: 0;
   line-height: normal;
 
@@ -125,7 +127,7 @@ input {
   }
 }
 
-[type="number"] {
+[type="number"]:not([class*="el-"]) {
   -moz-appearance: textfield;
 
   &::-webkit-inner-spin-button,
@@ -136,8 +138,9 @@ input {
   }
 }
 
-[type="search"] {
+[type="search"]:not([class*="el-"]) {
   -webkit-appearance: textfield;
+  appearance: textfield;
 
   &::-webkit-search-cancel-button,
   &::-webkit-search-decoration {
@@ -145,14 +148,16 @@ input {
   }
 }
 
-textarea {
+textarea:not([class*="el-"]) {
   overflow: auto;
   resize: none;
   -webkit-appearance: none;
+  appearance: none;
 }
 
-select {
+select:not([class*="el-"]) {
   -webkit-appearance: none;
+  appearance: none;
   background-color: #fff;
 }
 

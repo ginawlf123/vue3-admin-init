@@ -1,13 +1,12 @@
-import axios from "axios";
+import { useUserStore } from "@/stores/user";
 import type {
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
+import axios from "axios";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { UserStore } from "@/stores/user";
-import router from "@/router";
 
 // 扩展 AxiosRequestConfig 类型，添加自定义配置
 interface RequestConfig extends AxiosRequestConfig {
@@ -17,10 +16,12 @@ interface RequestConfig extends AxiosRequestConfig {
 
 // 响应数据格式（根据你的后端结构调整）
 export interface ApiResponse<T = any> {
-  code: number; // 状态码：20000 成功，其他失败
+  result: boolean; // 是否成功：true 成功，false 失败
   message: string; // 提示信息
-  data: T; // 返回数据
-  timestamp?: number; // 时间戳
+  state: number; // 状态码：0 成功，其他失败
+  bizData: T; // 返回数据
+  // 为了兼容性，添加 data 字段（映射自 bizData）
+  data?: T;
 }
 
 class Request {
@@ -51,8 +52,8 @@ class Request {
         }
 
         // 2. 添加 token（从你的 store 获取）
-        const userStore = UserStore();
-        const token = userStore.token || localStorage.getItem("token");
+        const userStore = useUserStore();
+        const token = userStore.token;
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -62,18 +63,18 @@ class Request {
         config.headers["x-timestamp"] = Date.now().toString();
 
         // 4. 开发环境打印请求信息
-        if (import.meta.env.DEV) {
-          console.log(
-            `🚀 [API] ${config.method?.toUpperCase()} ${config.url}`,
-            config,
-          );
-        }
+        // if (import.meta.env.DEV) {
+        //   console.log(
+        //     `🚀 [API] ${config.method?.toUpperCase()} ${config.url}`,
+        //     config,
+        //   );
+        // }
 
         return config;
       },
       (error) => {
         return Promise.reject(error);
-      },
+      }
     );
 
     // 响应拦截器
@@ -84,73 +85,59 @@ class Request {
 
         const res = response.data;
 
-        if (import.meta.env.DEV) {
-          console.log("✅ [API] 响应成功:", {
-            url: response.config.url,
-            code: res.code,
-            data: res.data,
-          });
+        // 判断请求是否成功：state === 0 或 result === true
+        const isSuccess = res.state === 0 || res.result === true;
+
+        if (isSuccess) {
+          // ✅ 将 res数据返回 映射到 data 字段，方便调用方使用
+          return {
+            ...response,
+            data: {
+              ...res,
+            },
+          };
         }
 
-        // 根据你的后端状态码处理
-        if (res.code === 20000 || res.code === 200) {
-          // ✅ 返回完整的 response，但将数据放在 response.data 中
-          return response;
-        } else {
-          // 业务错误处理
-          this.handleBusinessError(res);
-          return Promise.reject(new Error(res.message || "请求失败"));
-        }
+        // 业务错误处理
+        this.handleBusinessError(res, response.config as RequestConfig);
+        return Promise.reject(new Error(res.message || "请求失败"));
       },
       (error) => {
         this.hideLoading();
         this.handleHttpError(error);
         return Promise.reject(error);
-      },
+      }
     );
   }
 
-  // 显示加载提示
+  // 显示加载提示（预留接口，如需使用可取消注释）
   private showLoading() {
     this.loadingCount++;
-    if (this.loadingCount === 1) {
-      // 可以显示全局 loading
-      // ElLoading.service({ fullscreen: true, text: '加载中...' })
-    }
+    // 如需使用全局 loading，取消下面的注释
+    // if (this.loadingCount === 1) {
+    //   ElLoading.service({ fullscreen: true, text: '加载中...' });
+    // }
   }
 
   // 隐藏加载提示
   private hideLoading() {
-    this.loadingCount--;
-    if (this.loadingCount <= 0) {
-      this.loadingCount = 0;
-      // 关闭全局 loading
-      // const loadingInstance = ElLoading.service()
-      // loadingInstance.close()
-    }
+    this.loadingCount = Math.max(0, this.loadingCount - 1);
+    // 如需使用全局 loading，取消下面的注释
+    // if (this.loadingCount === 0) {
+    //   const loadingInstance = ElLoading.service();
+    //   loadingInstance.close();
+    // }
   }
 
   // 处理业务错误
-  private handleBusinessError(res: ApiResponse) {
-    const config = (res as any).config || {};
-
+  private handleBusinessError(res: ApiResponse, config?: RequestConfig) {
     // 如果不显示错误提示，直接返回
-    if (config.showError === false) return;
+    if (config?.showError === false) return;
 
-    switch (res.code) {
+    // 使用 state 字段判断错误类型
+    switch (res.state) {
       case 401: // 未授权或 token 过期
-        ElMessageBox.confirm("登录已过期，请重新登录", "提示", {
-          confirmButtonText: "去登录",
-          cancelButtonText: "取消",
-          type: "warning",
-        }).then(() => {
-          // 清除用户信息
-          const userStore = UserStore();
-          userStore.logout();
-          localStorage.removeItem("token");
-          // 跳转到登录页
-          router.push("/login");
-        });
+        this.handleUnauthorized();
         break;
 
       case 403: // 无权限
@@ -162,15 +149,35 @@ class Request {
         break;
 
       default:
-        if (res.message) {
-          ElMessage.error(res.message);
-        }
+        // 显示后端返回的错误消息
+        ElMessage.error(res.message || "请求失败");
     }
+  }
+
+  // 处理未授权错误
+  private handleUnauthorized() {
+    ElMessageBox.confirm("登录已过期，请重新登录", "提示", {
+      confirmButtonText: "去登录",
+      cancelButtonText: "取消",
+      type: "warning",
+    })
+      .then(() => {
+        const userStore = useUserStore();
+        userStore.logout();
+        // logout 内部已清理 store 并跳转，无需再手动操作 localStorage/router
+      })
+      .catch(() => {
+        // 用户取消登录，不做任何操作
+      });
   }
 
   // 处理 HTTP 错误
   private handleHttpError(error: any) {
     const { response, message } = error || {};
+    const config = error?.config as RequestConfig | undefined;
+
+    // 如果不显示错误提示，直接返回
+    if (config?.showError === false) return;
 
     if (import.meta.env.DEV) {
       console.error("❌ [API] 请求失败:", error);
@@ -178,73 +185,84 @@ class Request {
 
     // 网络错误（没有响应）
     if (!response) {
-      if (message.includes("timeout")) {
-        ElMessage.error("请求超时，请检查网络");
-      } else if (message.includes("Network Error")) {
-        ElMessage.error("网络连接失败，请检查网络");
-      } else {
-        ElMessage.error("请求失败，请稍后重试");
-      }
+      const errorMsg = this.getNetworkErrorMessage(message);
+      ElMessage.error(errorMsg);
       return;
     }
 
     // HTTP 状态码错误
-    const status = response.status;
-    switch (status) {
-      case 400:
-        ElMessage.error("请求参数错误");
-        break;
-      case 401:
-        // 已经在业务错误中处理，这里不再重复提示
-        break;
-      case 403:
-        ElMessage.error("禁止访问");
-        break;
-      case 404:
-        ElMessage.error("请求的资源不存在");
-        break;
-      case 500:
-        ElMessage.error("服务器内部错误");
-        break;
-      default:
-        ElMessage.error(`请求失败 (${status})`);
+    this.handleHttpStatusError(response.status);
+  }
+
+  // 获取网络错误消息
+  private getNetworkErrorMessage(message?: string): string {
+    if (!message) return "请求失败，请稍后重试";
+
+    const msg = message.toLowerCase();
+    if (msg.includes("timeout")) {
+      return "请求超时，请检查网络";
     }
+    if (msg.includes("network error") || msg.includes("networkerror")) {
+      return "网络连接失败，请检查网络";
+    }
+    return "请求失败，请稍后重试";
+  }
+
+  // 处理 HTTP 状态码错误
+  private handleHttpStatusError(status: number) {
+    const errorMap: Record<number, string> = {
+      400: "请求参数错误",
+      403: "禁止访问",
+      404: "请求的资源不存在",
+      500: "服务器内部错误",
+      502: "网关错误",
+      503: "服务不可用",
+      504: "网关超时",
+    };
+
+    // 401 已在业务错误中处理，这里跳过
+    if (status === 401) return;
+
+    const errorMsg = errorMap[status] || `请求失败 (${status})`;
+    ElMessage.error(errorMsg);
   }
 
   // 封装请求方法
-  public request<T = any>(config: RequestConfig): Promise<ApiResponse<T>> {
-    return this.instance.request<any, ApiResponse<T>>(config);
+  public request<T = any>(
+    config: RequestConfig
+  ): Promise<AxiosResponse<ApiResponse<T>>> {
+    return this.instance.request<any, AxiosResponse<ApiResponse<T>>>(config);
   }
 
   public get<T = any>(
     url: string,
     params?: any,
-    config?: RequestConfig,
-  ): Promise<ApiResponse<T>> {
+    config?: RequestConfig
+  ): Promise<AxiosResponse<ApiResponse<T>>> {
     return this.request<T>({ method: "GET", url, params, ...config });
   }
 
   public post<T = any>(
     url: string,
     data?: any,
-    config?: RequestConfig,
-  ): Promise<ApiResponse<T>> {
+    config?: RequestConfig
+  ): Promise<AxiosResponse<ApiResponse<T>>> {
     return this.request<T>({ method: "POST", url, data, ...config });
   }
 
   public put<T = any>(
     url: string,
     data?: any,
-    config?: RequestConfig,
-  ): Promise<ApiResponse<T>> {
+    config?: RequestConfig
+  ): Promise<AxiosResponse<ApiResponse<T>>> {
     return this.request<T>({ method: "PUT", url, data, ...config });
   }
 
   public delete<T = any>(
     url: string,
     params?: any,
-    config?: RequestConfig,
-  ): Promise<ApiResponse<T>> {
+    config?: RequestConfig
+  ): Promise<AxiosResponse<ApiResponse<T>>> {
     return this.request<T>({ method: "DELETE", url, params, ...config });
   }
 
@@ -252,11 +270,11 @@ class Request {
   public upload<T = any>(
     url: string,
     file: File | Blob,
-    filename?: string,
-    config?: RequestConfig,
-  ): Promise<ApiResponse<T>> {
+    filename: string = "file",
+    config?: RequestConfig
+  ): Promise<AxiosResponse<ApiResponse<T>>> {
     const formData = new FormData();
-    formData.append(filename || "file", file);
+    formData.append(filename, file);
 
     return this.request<T>({
       method: "POST",
@@ -289,12 +307,17 @@ class Request {
   // 从响应头获取文件名
   private getFileNameFromResponse(response: AxiosResponse): string {
     const contentDisposition = response.headers["content-disposition"];
-    if (contentDisposition) {
-      const match = contentDisposition.match(
-        /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
-      );
-      if (match && match[1]) {
-        return decodeURIComponent(match[1].replace(/['"]/g, ""));
+    if (!contentDisposition) return "";
+
+    // 匹配 filename= 或 filename*= 格式
+    const match = contentDisposition.match(
+      /filename[*]?=['"]?([^'";\n]+)['"]?/i
+    );
+    if (match?.[1]) {
+      try {
+        return decodeURIComponent(match[1].trim());
+      } catch {
+        return match[1].trim();
       }
     }
     return "";

@@ -1,17 +1,46 @@
 # vue3-AI-admin
 
-基于 Vue 3 + Vite + TypeScript + Pinia 的现代化后台管理系统模板。
+基于 **Vue 3 + Vite + TypeScript + Pinia + Element Plus** 的现代化后台管理系统模板（开箱即用、约定优于配置）。
+
+> 目标：让你把精力放在业务上，而不是从 0 搭脚手架、配工具链。
+
+## 🚀 30 秒快速上手（最短路径）
+
+```bash
+pnpm install
+pnpm dev
+```
+
+- **开发地址**: `http://localhost:5173`
+- **环境变量**: 根目录创建 `.env.development`（示例见下方“快速开始 → 配置环境变量”）
+
+## ✨ 你会得到什么（项目亮点）
+
+- **现代化技术栈**：Vue 3.5+ / Vite 7.3+ / TS 5.9+ / Pinia 3+ / Router 5+ / Element Plus 2.13+
+- **自动导入**：Vue / Vue Router / Pinia API 与 Element Plus 组件自动导入，减少样板代码
+- **工程化规范**：ESLint + Prettier（避免规则冲突），统一代码风格与提交规范建议
+- **目录清晰**：按业务模块划分 `api/`、`types/`、`stores/`、`views/`，利于扩展与协作
+- **请求封装**：Axios 统一拦截、错误处理、Token 管理（见 `src/utils/request.ts` 说明）
+- **主题/布局基础**：布局组件与主题状态（`src/layout/`、`src/stores/theme.ts`）已就绪
+
+## 📌 导航（建议按这个顺序阅读）
+
+- **第一次运行项目**：[#快速开始](#-快速开始)
+- **想知道代码放哪**：[#项目结构](#-项目结构)
+- **想改代理/端口/自动导入**：[#配置说明](#️-配置说明)
+- **想看请求封装/响应格式**：[#api-请求封装-srcutilsrequestts](#api-请求封装-srcutilsrequestts)
+- **提交前检查**：[#常用命令](#-常用命令) / [#团队协作](#-团队协作)
 
 ## 📋 目录
 
-- [技术栈](#技术栈)
-- [环境要求](#环境要求)
-- [快速开始](#快速开始)
-- [项目结构](#项目结构)
-- [配置说明](#配置说明)
-- [开发规范](#开发规范)
-- [常用命令](#常用命令)
-- [团队协作](#团队协作)
+- [技术栈](#-技术栈)
+- [环境要求](#-环境要求)
+- [快速开始](#-快速开始)
+- [项目结构](#-项目结构)
+- [配置说明](#️-配置说明)
+- [开发规范](#-开发规范)
+- [常用命令](#-常用命令)
+- [团队协作](#-团队协作)
 
 ## 🛠 技术栈
 
@@ -25,6 +54,41 @@
 - **代码规范**: ESLint + TypeScript ESLint
 - **样式预处理**: Sass/SCSS
 - **包管理器**: pnpm
+
+### 🔧 关键工程化能力（项目里“实际启用”的技术/插件）
+
+> 这一节不是“可选项列表”，而是当前项目已经接入并在运行的能力，方便你快速定位配置与入口。
+
+- **自动导入 API**：`unplugin-auto-import`
+  - **作用**：自动导入 `vue` / `vue-router` / `pinia` 常用 API，减少 `import { ref, computed } ...` 样板代码
+  - **配置位置**：`vite.config.ts`
+  - **生成文件**：`src/auto-imports.d.ts`、`./.eslintrc-auto-import.json`
+
+- **组件按需引入**：`unplugin-vue-components` + `ElementPlusResolver`
+  - **作用**：Element Plus 组件与样式按需加载（避免全量引入），并支持 `src/components` 目录全局组件自动注册
+  - **配置位置**：`vite.config.ts`
+  - **生成文件**：`src/components.d.ts`
+
+- **Element Plus 图标**：`@element-plus/icons-vue`
+  - **作用**：Element Plus 图标统一注册后直接在组件中使用
+  - **入口位置**：`src/plugins/icons.ts`（注册）与 `src/main.ts`（调用 `registerIcons(app)`）
+
+- **SVG 图标体系**：`vite-plugin-svg-icons` + `virtual:svg-icons-register`
+  - **作用**：将 `src/assets/icons` 下的 svg 打包为 symbol，通过 `SvgIcon` 组件统一渲染
+  - **配置位置**：`vite.config.ts`（仅目录存在时启用，避免报错）
+  - **入口位置**：`src/main.ts` 引入 `virtual:svg-icons-register`
+
+- **Pinia 状态持久化**：`pinia-plugin-persistedstate`
+  - **作用**：将指定 store 状态持久化到本地存储（常用于 token、主题、偏好设置等）
+  - **入口位置**：`src/main.ts`（`pinia.use(piniaPluginPersistedstate)`）
+
+- **请求与进度条常用库**：`axios` / `nprogress`
+  - **作用**：统一 HTTP 请求封装与页面切换/请求加载进度条（具体封装见下方“API 请求封装”章节）
+
+- **Lint/格式化体系**：ESLint 10（Flat Config）+ TypeScript ESLint + eslint-plugin-vue + Prettier
+  - **作用**：统一语法/类型/Vue 规则检查，同时用 `eslint-config-prettier` 避免与 Prettier 冲突
+  - **配置位置**：`eslint.config.js`
+  - **细节**：会读取 `./.eslintrc-auto-import.json` 把自动导入的全局变量加入 ESLint globals
 
 ## 📦 环境要求
 
@@ -87,6 +151,13 @@ pnpm dev
 项目将在 `http://localhost:5173` 启动（端口可在 `vite.config.ts` 中修改）。
 
 ### 5. 构建生产版本
+
+### 6.（可选）你可能会立刻想改的几件事
+
+- **应用标题**：`.env.*` 中的 `VITE_APP_TITLE`
+- **接口代理前缀 / 目标地址**：`.env.*` 的 `VITE_API_PROXY_PREFIX` + `vite.config.ts` 的 proxy
+- **全局样式变量**：`src/styles/variables.scss`
+- **路由入口**：`src/router/index.ts`、路由表 `src/router/routes.ts`
 
 ```bash
 pnpm build
